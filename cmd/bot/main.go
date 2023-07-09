@@ -60,7 +60,7 @@ func main() {
 		).ViewCmdComposers(),
 	)
 
-	botCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGSTOP)
+	botCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGKILL)
 	defer stop()
 
 	slog.Println("bot started working: T.T")

@@ -2,7 +2,6 @@ package botkit
 
 import (
 	"context"
-	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/gookit/slog"
@@ -39,9 +38,7 @@ func (b *Bot) Run(ctx context.Context) error {
 	for {
 		select {
 		case update := <-b.updates:
-			updateCtx, updateCancel := context.WithTimeout(ctx, 5*time.Second)
-			b.handleViewUpdate(updateCtx, update)
-			updateCancel()
+			b.handleViewUpdate(ctx, update)
 		case <-ctx.Done():
 			return ctx.Err()
 		}

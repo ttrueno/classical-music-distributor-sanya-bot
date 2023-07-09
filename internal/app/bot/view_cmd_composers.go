@@ -7,6 +7,7 @@ import (
 	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/gookit/slog"
 	"github.com/ttrueno/rl2-final/internal/app/botkit"
 	"github.com/ttrueno/rl2-final/internal/app/models"
 	"github.com/ttrueno/rl2-final/internal/db/psql"
@@ -110,11 +111,16 @@ func (h *ViewCmdGetComposers) ViewCmdComposers() botkit.ViewFunc {
 func (h *ViewCmdGetComposers) handleIO(chatID int64, ctx context.Context, composers []models.Composer) (done bool, err error) {
 	update, err := h.bot.Update(ctx)
 	if err != nil {
-		if Err := h.bot.Send(ctx, tgbotapi.NewMessage(chatID, shutdownMessage)); Err != nil {
-			return false, fmt.Errorf("%v: %v", err, Err)
+		switch {
+		case errors.Is(err, context.Canceled):
+			slog.Println("Canceled, yaay")
+			if Err := h.bot.Send(ctx, tgbotapi.NewMessage(chatID, shutdownMessage)); Err != nil {
+				return false, err
+			}
+			return false, err
+		default:
+			return false, nil
 		}
-
-		return false, err
 	}
 
 	switch update.Message.Text {
@@ -131,13 +137,17 @@ func (h *ViewCmdGetComposers) handleIO(chatID int64, ctx context.Context, compos
 
 	num, err := conv.ParseFirstInt64(update.Message.Text)
 	if err != nil {
+		msg.Text = clientResponseOutOfRangeResponse
+		if Err := h.bot.Send(ctx, msg); Err != nil {
+			return false, fmt.Errorf("%v: %v", err, Err)
+		}
 		return false, nil
 	}
 
 	if num < 1 || num > int64(len(composers)) {
 		msg.Text = clientResponseOutOfRangeResponse
-		if err := h.bot.Send(ctx, msg); err != nil {
-			return false, err
+		if Err := h.bot.Send(ctx, msg); Err != nil {
+			return false, fmt.Errorf("%v: %v", err, Err)
 		}
 		return false, nil
 	}
