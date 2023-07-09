@@ -1,0 +1,16 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+Makefile
+*.sh
+*.cue
+*.yaml
+
+!*.example.*
+
+*.test
+
+*.out
+
