@@ -20,6 +20,7 @@ const (
 	clientResponseOutOfRangeResponse = "Оу, прости, но ответ должен состоять в множестве допустимых значений((."
 	askClientToRespondMessage        = "Вот варианты ответов.Выбери пожалуйста: "
 	noRecordsMessage                 = "Оу, прости, но у нас более нет записей с этой страницы, мы перенесём тебя на предыдущую."
+	shutdownMessage                  = "Прости, но бот приостанавливает свою работу. Пока-пока..."
 )
 
 type compositionsFetcher interface {
@@ -94,7 +95,7 @@ func (h *ViewCmdGetComposers) ViewCmdComposers() botkit.ViewFunc {
 			if err := h.sendKeyboard(ctx, update.FromChat().ID, msg, composers); err != nil {
 				return err
 			}
-			done, err := h.handleIO(ctx, composers)
+			done, err := h.handleIO(update.FromChat().ID, ctx, composers)
 			if err != nil {
 				return err
 			}
@@ -106,8 +107,16 @@ func (h *ViewCmdGetComposers) ViewCmdComposers() botkit.ViewFunc {
 	}
 }
 
-func (h *ViewCmdGetComposers) handleIO(ctx context.Context, composers []models.Composer) (done bool, err error) {
-	update := h.bot.Update(ctx)
+func (h *ViewCmdGetComposers) handleIO(chatID int64, ctx context.Context, composers []models.Composer) (done bool, err error) {
+	update, err := h.bot.Update(ctx)
+	if err != nil {
+		if Err := h.bot.Send(ctx, tgbotapi.NewMessage(chatID, shutdownMessage)); Err != nil {
+			return false, fmt.Errorf("%v: %v", err, Err)
+		}
+
+		return false, err
+	}
+
 	switch update.Message.Text {
 	case nextPageButtonLabel:
 		h.p.Next()

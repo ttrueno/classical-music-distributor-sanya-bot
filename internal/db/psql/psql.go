@@ -23,6 +23,7 @@ func Connect(ctx context.Context, cfg config.DbConnConfig) (_ *DB, err error) {
 	var errmsg = "psql.Connect"
 
 	defer func() { err = e.WrapIfErr(errmsg, err) }()
+
 	poolConfig, err := pgxpool.ParseConfig(cfg.Dsn)
 	if err != nil {
 		return nil, err

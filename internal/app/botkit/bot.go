@@ -39,7 +39,7 @@ func (b *Bot) Run(ctx context.Context) error {
 	for {
 		select {
 		case update := <-b.updates:
-			updateCtx, updateCancel := context.WithTimeout(context.Background(), 5*time.Second)
+			updateCtx, updateCancel := context.WithTimeout(ctx, 5*time.Second)
 			b.handleViewUpdate(updateCtx, update)
 			updateCancel()
 		case <-ctx.Done():
@@ -48,8 +48,13 @@ func (b *Bot) Run(ctx context.Context) error {
 	}
 }
 
-func (b *Bot) Update(ctx context.Context) tgbotapi.Update {
-	return <-b.updates
+func (b *Bot) Update(ctx context.Context) (*tgbotapi.Update, error) {
+	select {
+	case update := <-b.updates:
+		return &update, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 func (b *Bot) Send(ctx context.Context, msg tgbotapi.MessageConfig) error {
